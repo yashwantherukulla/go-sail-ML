@@ -2,3 +2,4 @@ venv
 cloned_repos
 .env
 **/__pycache__
+analysis_cache

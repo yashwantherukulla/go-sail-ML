@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from llama_index.core.node_parser import CodeSplitter
 from llama_index.readers.file import FlatReader
-import languages
+from ..eval.languages import languageExtensions
 
 class ChunkExtractor:
     def __init__(self):
@@ -16,7 +16,8 @@ class ChunkExtractor:
 
     def detectLanguage(self, filePath):
         extension = Path(filePath).suffix[1:].lower()
-        return languages.languageExtensions.get(extension, 'unknown')
+        print(languageExtensions.get(extension, 'unknown'), "\n\n\n")
+        return languageExtensions.get(extension, 'unknown')
 
     def processRepos(self, root_folder):
         root_path = Path(root_folder)
@@ -27,35 +28,36 @@ class ChunkExtractor:
     def processRepo(self, repo_path):
         chunk_folder = repo_path / "chunk_data"
         chunk_folder.mkdir(exist_ok=True)
-        file_counter = 0
-
+        
         for file_path in repo_path.rglob('*'):
-            if file_path.is_file() and file_path.parent != chunk_folder:
-                file_counter = self.processFile(file_path, chunk_folder, file_counter)
+            if file_path.is_file() and (str(chunk_folder) not in str(file_path)):
+                self.processFile(file_path, chunk_folder)
 
-    def processFile(self, file_path, chunk_folder, file_counter):
+    def processFile(self, file_path, chunk_folder):
         try:
             language = self.detectLanguage(file_path)
             if language == 'unknown':
                 self.logger.info(f"Skipping file with unknown language: {file_path}")
-                return file_counter
+                return
             
             document = FlatReader().load_data(file_path)
             
             code_splitter = CodeSplitter(chunk_lines=1000, language=language, max_chars=6000)
             nodes = code_splitter.get_nodes_from_documents(document)
             
-            for node in nodes:
-                chunk_file_path = chunk_folder / f"{file_counter}.json"
+            # Create relative path string for naming
+            rel_path = str(file_path)
+            # Replace path separators with dashes
+            file_identifier = rel_path.replace('/', '#').replace('\\', '##')
+            
+            for i, node in enumerate(nodes, 1):
+                chunk_file_path = chunk_folder / f"{file_identifier}-{i}.json"
                 chunk_file_path.write_text(node.to_json(), encoding="utf-8")
-                file_counter += 1
             
             self.logger.info(f"Processed file: {file_path}")
-            return file_counter
                 
         except Exception as e:
             self.logger.error(f"Error processing file {file_path}: {str(e)}", exc_info=True)
-            return file_counter
 
 if __name__ == "__main__":
     base_path = Path("./cloned_repos")

@@ -9,11 +9,16 @@ from dotenv import load_dotenv
 from ..models.code_descriptor_model import CodeDescriptorModel, sys_prompt as code_descriptor_sys_prompt
 from ..models.code_quality_eval_model import CodeQualityModel, sys_prompt as code_quality_sys_prompt
 from ..models.code_sec_eval_model import CodeSecurityModel, sys_prompt as code_sec_sys_prompt
+
 load_dotenv(dotenv_path=".env")
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 
-GROQ_MODEL = "llama-3.1-70b-versatile"#"gemma2-9b-it"
+GROQ_MODEL = "gemma2-9b-it" #"llama-3.1-70b-versatile"
 TIME_DELAY = 1
+OUTPUT_FOLDER = "output_data"
+SEC_OUT = OUTPUT_FOLDER + "/code_security"
+QUAL_OUT = OUTPUT_FOLDER + "/code_quality"
+DESC_OUT = OUTPUT_FOLDER + "/code_descriptor"
 
 class CodeAnalyser:
     def __init__(self, analysis_mode: str):
@@ -34,8 +39,11 @@ class CodeAnalyser:
 
     def get_code(self, file_path: str):
         with open(file_path, 'r') as f:
-            return f.read()
-
+            raw = f.read()
+            data = json.loads(raw)
+            code = data.get("text")
+        return code
+    
     def get_output(self, file_path: str):
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         client = instructor.from_groq(client, mode=instructor.Mode.TOOLS)
@@ -60,23 +68,20 @@ class CodeAnalyser:
             file_path = os.path.join(chunk_folder_path, file)
             if os.path.isfile(file_path):
                 self.logger.info(f"Processing chunk: {file_path}")
-                self.process_chunk(file_path, output_folder, mapping)
+                self.process_chunk(file_path, output_folder)
                 time.sleep(TIME_DELAY)
-
-        with open(os.path.join(repo_path, "file_output_mapping.json"), "w") as f:
-            json.dump(mapping, f, indent=2)
 
         self.final_scores(repo_path)
 
-    def process_chunk(self, file_path, output_folder, mapping):
+    def process_chunk(self, file_path, output_folder):
         try:
             output = self.get_output(file_path).model_dump_json(indent=2)
-            output_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(file_path))[0]}.json")
+            
+            output_file_path = os.path.join(output_folder, f"{os.path.splitext(os.path.basename(file_path))[0]}.json") 
             
             with open(output_file_path, "w", encoding="utf-8") as f:
                 f.write(output)
             
-            mapping[file_path] = output_file_path
         except Exception as e:
             self.logger.error(f"Error processing file {file_path}: {str(e)}")
 
