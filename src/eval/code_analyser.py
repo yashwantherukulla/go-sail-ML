@@ -12,7 +12,7 @@ from ..models.code_sec_eval_model import CodeSecurityModel, sys_prompt as code_s
 load_dotenv(dotenv_path=".env")
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 
-GROQ_MODEL = "gemma2-9b-it"
+GROQ_MODEL = "llama-3.1-70b-versatile"#"gemma2-9b-it"
 TIME_DELAY = 1
 
 class CodeAnalyser:
@@ -29,22 +29,24 @@ class CodeAnalyser:
         elif analysis_mode == "code_security":
             self.sys_prompt = code_sec_sys_prompt
             self.response_model = CodeSecurityModel
+        else:
+            print("choose one of the following analysis modes: code_descriptor, code_quality, code_security")
 
     def get_code(self, file_path: str):
         with open(file_path, 'r') as f:
             return f.read()
 
-    def get_output(self, file_path: str, sys_prompt=code_descriptor_sys_prompt, response_model=CodeDescriptorModel):
+    def get_output(self, file_path: str):
         client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         client = instructor.from_groq(client, mode=instructor.Mode.TOOLS)
 
         output = client.chat.completions.create(
             model=GROQ_MODEL,
             messages=[
-                {"role": "system", "content": sys_prompt},
+                {"role": "system", "content": self.sys_prompt},
                 {"role": "user", "content": self.get_code(file_path)},
             ],
-            response_model=response_model,
+            response_model=self.response_model,
         )
         return output
 
@@ -108,5 +110,5 @@ class CodeAnalyser:
 
 if __name__ == "__main__":
     repo_path = "./cloned_repos/regit"
-    code_analyser = CodeAnalyser()
+    code_analyser = CodeAnalyser("code_security")
     code_analyser.process_repo(repo_path)

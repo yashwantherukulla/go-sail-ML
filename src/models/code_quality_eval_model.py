@@ -3,7 +3,7 @@ from typing import List, Optional
 
 class ParamModel(BaseModel):
     score: int = Field(..., ge=1, le=10, description="Score from 1 to 10")
-    remarks: Optional[str] = Field(None, description="Remarks explaining the score")
+    remarks: Optional[str] = Field(None, min_items=1, description="Remarks explaining the score")
 
 class CodeQualityModel(BaseModel):
     # Code Quality
