@@ -45,9 +45,9 @@ def init(data: Init) -> Dict[str, str]:
     chunk_extractor.processRepos(BASE_PATH)
     return {"message": "Repository initialized."}
 
-@app.post("/analyze/code_security")
-def analyze_code_security(data: AnalysisRequest):
-    code_analyser = CodeAnalyser("code_security")
+@app.post("/analyze/")
+def analyze_code(data: AnalysisRequest):
+    code_analyser = CodeAnalyser(data.analysis_type)
     code_analyser.process_repo(REPO_PATH)
     output_data = read_output_data(REPO_PATH)
     
