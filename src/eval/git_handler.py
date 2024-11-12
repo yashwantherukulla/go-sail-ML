@@ -1,4 +1,3 @@
-#git_handler.py
 import pygit2
 from typing import List
 import logging
