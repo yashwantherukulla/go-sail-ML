@@ -38,9 +38,9 @@ def init(data: Init) -> Dict[str, str]:
     git_handler = GitHandler()
     git_handler = GitHandler(BASE_PATH)
     git_handler.clone_repository(data.url)
-    repo_name = data.url.split('/')[-1].replace('.git', '')
+    repo_name = os.path.splitext(data.url.split('/')[-1])[0]
+    global REPO_PATH
     REPO_PATH = os.path.join(BASE_PATH, repo_name)
-
     chunk_extractor = ChunkExtractor()
     chunk_extractor.processRepos(BASE_PATH)
     return {"message": "Repository initialized."}

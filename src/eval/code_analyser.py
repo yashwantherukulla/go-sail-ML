@@ -12,7 +12,7 @@ from ..models.code_sec_eval_model import CodeSecurityModel, sys_prompt as code_s
 load_dotenv(dotenv_path=".env")
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 
-GROQ_MODEL = "llama-3.1-70b-versatile"#"gemma2-9b-it"
+GROQ_MODEL = "gemma2-9b-it"#"llama-3.1-70b-versatile"
 TIME_DELAY = 1
 
 class CodeAnalyser:
