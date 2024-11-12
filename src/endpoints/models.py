@@ -1,7 +1,9 @@
+#models.py
 from pydantic import BaseModel
 from typing import Dict, List, Optional, Union, Any
 
 class AnalysisRequest(BaseModel):
+    url: str #changes
     path: str
     force_recompute: bool = False
 

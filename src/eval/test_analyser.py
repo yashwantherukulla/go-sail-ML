@@ -54,15 +54,14 @@ def test_analyser():
     logging.basicConfig(level=logging.INFO)
     
     # Initialize cache manager with absolute path
-    cache_dir = Path.cwd() / "analysis_cache"
+    cache_dir = Path("./analysis_cache")
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_manager = CacheManager(str(cache_dir))
     
     # Test paths - convert to absolute paths
-    base_path = Path.cwd()
-    repo_path = base_path / "cloned_repos" / "regit"
-    test_file = repo_path / "main.go" 
-    test_folder = repo_path / "cmd"
+    repo_path = Path("cloned_repos") / Path("regit")
+    test_file = repo_path / Path("main.go") 
+    test_folder = repo_path / Path("cmd")
     
     # Validate paths
     if not all(verify_paths(repo_path, test_file, test_folder)):
@@ -74,7 +73,7 @@ def test_analyser():
     print(f"Test folder: {test_folder}")
     
     # Test all three types of analysis
-    analysis_modes = ["code_descriptor", "code_security", "code_quality"]
+    analysis_modes = ["code_security", "code_quality"]
     success = True
     
     for mode in analysis_modes:

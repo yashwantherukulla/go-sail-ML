@@ -1,11 +1,15 @@
+#code_eval.py
 from fastapi import FastAPI, HTTPException
 from typing import Dict
 from src.eval.cache_manager import CacheManager
 from src.eval.code_analyserv2 import CodeAnalyser
 from src.endpoints.models import AnalysisRequest, AnalysisResponse
+from src.eval.git_handler import GitHandler
+import os
 
 app = FastAPI()
 cache_manager = CacheManager("analysis_cache")
+git_handler = GitHandler("./clones_repos")
 
 def get_analyser(analysis_type: str) -> CodeAnalyser:
     return CodeAnalyser(analysis_type, cache_manager)
@@ -13,7 +17,8 @@ def get_analyser(analysis_type: str) -> CodeAnalyser:
 @app.post("/file_description")
 async def file_description(request: AnalysisRequest) -> AnalysisResponse:
     analyser = get_analyser("code_descriptor")
-    result = await analyser.analyze_file(request.path, request.force_recompute)
+    repo = git_handler.clone_repository(request.url)
+    result = await analyser.analyze_file(os.path.join("./cloned_repos", request.path), request.force_recompute)
     return AnalysisResponse(
         path=request.path,
         analysis_type="description",

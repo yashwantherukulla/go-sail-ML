@@ -1,3 +1,4 @@
+#code_analyserv2.py
 import os
 import json
 import time
@@ -14,6 +15,7 @@ from ..models.code_quality_eval_model import CodeQualityModel, sys_prompt as cod
 from ..models.code_sec_eval_model import CodeSecurityModel, sys_prompt as code_sec_sys_prompt
 from ..eval.cache_manager import CacheManager
 from ..eval.chunker import ChunkExtractor
+from ..eval.languages import languageExtensions
 
 GROQ_MODEL = "llama-3.1-70b-versatile"#"gemma2-9b-it"
 
@@ -46,18 +48,21 @@ class CodeAnalyser:
             if cached_result:
                 return {**cached_result, "cached": True}
         
-        chunks = self._get_file_chunks(file_path)
-        results = []
-        for chunk in chunks:
-            code = chunk["text"]
-            result = self._analyze_chunk(code)
-            results.append(result)
-        
-        aggregated_result = self._aggregate_results(results)
-        self.cache_manager.cache_result(
-            self.analysis_mode, file_path, aggregated_result, is_file=True
-        )
-        return {**aggregated_result, "cached": False}
+        if (file_path.split('.')[-1]) in languageExtensions:
+            chunks = self._get_file_chunks(file_path)
+            results = []
+            for chunk in chunks:
+                code = chunk["text"]
+                result = self._analyze_chunk(code)
+                results.append(result)
+            
+            aggregated_result = self._aggregate_results(results)
+            self.cache_manager.cache_result(
+                self.analysis_mode, file_path, aggregated_result, is_file=True
+            )
+            return {**aggregated_result, "cached": False}
+        else:
+            return
     
     def analyze_directory(self, dir_path: str, force_recompute: bool = False) -> Dict:
         """Analyze a directory"""
@@ -72,7 +77,8 @@ class CodeAnalyser:
         for file_path in Path(dir_path).rglob("*"):
             if file_path.is_file():
                 result = self.analyze_file(str(file_path), force_recompute)
-                results.append(result)
+                if result:
+                    results.append(result)
         
         aggregated_result = self._aggregate_results(results)
         self.cache_manager.cache_result(
@@ -118,7 +124,8 @@ class CodeAnalyser:
     def _aggregate_results(self, results: List[Dict]) -> Dict:
         """Aggregate results from multiple chunks or files"""
         if not results:
-            return {"scores": {}, "descriptions": [], "details": {}}
+            # return {"scores": {}, "descriptions": [], "details": {}}
+            return
         
         if self.analysis_mode == "code_descriptor":
             return {
